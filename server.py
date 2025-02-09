@@ -77,7 +77,7 @@ def create_random_gradient_background(palette):
     color2 = hex_to_rgb(color2_hex)
     return create_gradient_image(WIDTH, HEIGHT, color1, color2, direction)
 
-def create_aa_mask(draw_func, size, scale=2):  # reduced scale from 4 to 2
+def create_aa_mask(draw_func, size, scale=2):
     w, h = size
     high_res_size = (w * scale, h * scale)
     mask_hr = Image.new("L", high_res_size, 0)
@@ -106,7 +106,7 @@ def create_custom_rounded_rect_mask(w, h, radii):
 def create_ellipse_mask(w, h):
     return create_aa_mask(lambda d, s, scale: d.ellipse([0, 0, s[0], s[1]], fill=255), (w, h), scale=2)
 
-def tessellate_rectangles(x0, y0, x1, y1, min_size=600, split_probability=0.8):  # increased min_size from 400 to 600
+def tessellate_rectangles(x0, y0, x1, y1, min_size=600, split_probability=0.8):
     rects = []
     width = x1 - x0
     height = y1 - y0
@@ -143,6 +143,10 @@ def add_tessellation_overlay(base_image, palette):
         opacity = random.uniform(0.5, 1.0)
         alpha = cell_gradient.split()[3].point(lambda p: int(p * opacity))
         cell_gradient.putalpha(alpha)
+        if random.random() < 0.2:
+            shadow_offset = (random.randint(1,3), random.randint(1,3))
+            shadow = Image.new("RGBA", cell_gradient.size, (0, 0, 0, 80))
+            overlay.paste(shadow, (x0 + shadow_offset[0], y0 + shadow_offset[1]), create_custom_rounded_rect_mask(w_rect, h_rect, (10,10,10,10)))
         min_dim = min(w_rect, h_rect)
         def rand_radius():
             return random.uniform(10, 0.2 * min_dim) if random.random() < 0.7 else 0
