@@ -140,6 +140,9 @@ def add_tessellation_overlay(base_image, palette):
         gradient_direction = random.choice(['vertical', 'horizontal', 'diagonal'])
         cell_gradient = create_gradient_image(w_rect, h_rect, color1, color2, gradient_direction)
         cell_gradient = cell_gradient.convert("RGBA")
+        opacity = random.uniform(0.5, 1.0)
+        alpha = cell_gradient.split()[3].point(lambda p: int(p * opacity))
+        cell_gradient.putalpha(alpha)
         min_dim = min(w_rect, h_rect)
         def rand_radius():
             return random.uniform(10, 0.2 * min_dim) if random.random() < 0.7 else 0
@@ -163,6 +166,9 @@ def add_extra_collage_elements(overlay, palette):
         gradient_direction = random.choice(['vertical', 'horizontal', 'diagonal'])
         shape_gradient = create_gradient_image(w_shape, h_shape, color1, color2, gradient_direction)
         shape_gradient = shape_gradient.convert("RGBA")
+        opacity = random.uniform(0.5, 1.0)
+        alpha = shape_gradient.split()[3].point(lambda p: int(p * opacity))
+        shape_gradient.putalpha(alpha)
         mask = create_ellipse_mask(w_shape, h_shape)
         overlay.paste(shape_gradient, (x0, y0), mask)
     return overlay
