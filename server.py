@@ -77,7 +77,7 @@ def create_random_gradient_background(palette):
     color2 = hex_to_rgb(color2_hex)
     return create_gradient_image(WIDTH, HEIGHT, color1, color2, direction)
 
-def create_aa_mask(draw_func, size, scale=4):
+def create_aa_mask(draw_func, size, scale=2):  # reduced scale from 4 to 2
     w, h = size
     high_res_size = (w * scale, h * scale)
     mask_hr = Image.new("L", high_res_size, 0)
@@ -101,12 +101,12 @@ def draw_rounded_rect(draw, size, scale, radii):
         draw.pieslice([(0, h_hr - 2*r_bl), (2*r_bl, h_hr)], 90, 180, fill=255)
 
 def create_custom_rounded_rect_mask(w, h, radii):
-    return create_aa_mask(lambda d, s, scale: draw_rounded_rect(d, s, scale, radii), (w, h), scale=4)
+    return create_aa_mask(lambda d, s, scale: draw_rounded_rect(d, s, scale, radii), (w, h), scale=2)
 
 def create_ellipse_mask(w, h):
-    return create_aa_mask(lambda d, s, scale: d.ellipse([0, 0, s[0], s[1]], fill=255), (w, h), scale=4)
+    return create_aa_mask(lambda d, s, scale: d.ellipse([0, 0, s[0], s[1]], fill=255), (w, h), scale=2)
 
-def tessellate_rectangles(x0, y0, x1, y1, min_size=400, split_probability=0.8):
+def tessellate_rectangles(x0, y0, x1, y1, min_size=600, split_probability=0.8):  # increased min_size from 400 to 600
     rects = []
     width = x1 - x0
     height = y1 - y0
@@ -126,7 +126,7 @@ def tessellate_rectangles(x0, y0, x1, y1, min_size=400, split_probability=0.8):
 
 def add_tessellation_overlay(base_image, palette):
     overlay = Image.new("RGBA", base_image.size, (0, 0, 0, 0))
-    rects = tessellate_rectangles(0, 0, WIDTH, HEIGHT, min_size=400, split_probability=0.8)
+    rects = tessellate_rectangles(0, 0, WIDTH, HEIGHT, min_size=600, split_probability=0.8)
     for rect in rects:
         x0, y0, x1, y1 = rect
         w_rect = x1 - x0
