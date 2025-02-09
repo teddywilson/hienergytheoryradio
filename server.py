@@ -167,12 +167,19 @@ def add_extra_collage_elements(overlay, palette):
         overlay.paste(shape_gradient, (x0, y0), mask)
     return overlay
 
+def apply_global_effects(image):
+    noise = Image.effect_noise((WIDTH, HEIGHT), 64).convert("L").convert("RGBA")
+    image = Image.blend(image, noise, 0.1)
+    image = image.filter(ImageFilter.SMOOTH)
+    return image
+
 def generate_artwork_to_stream():
     palette = generate_palette(10)
     background = create_random_gradient_background(palette)
     tess_overlay = add_tessellation_overlay(background, palette)
     tess_overlay = add_extra_collage_elements(tess_overlay, palette)
     final = Image.alpha_composite(background.convert("RGBA"), tess_overlay)
+    final = apply_global_effects(final)
     output = io.BytesIO()
     final.convert("RGB").save(output, "PNG")
     output.seek(0)
