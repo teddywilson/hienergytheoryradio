@@ -143,15 +143,18 @@ def add_tessellation_overlay(base_image, palette):
         opacity = random.uniform(0.5, 1.0)
         alpha = cell_gradient.split()[3].point(lambda p: int(p * opacity))
         cell_gradient.putalpha(alpha)
-        if random.random() < 0.2:
-            shadow_offset = (random.randint(1,3), random.randint(1,3))
-            shadow = Image.new("RGBA", cell_gradient.size, (0, 0, 0, 80))
-            overlay.paste(shadow, (x0 + shadow_offset[0], y0 + shadow_offset[1]), create_custom_rounded_rect_mask(w_rect, h_rect, (10,10,10,10)))
         min_dim = min(w_rect, h_rect)
-        def rand_radius():
-            return random.uniform(10, 0.2 * min_dim) if random.random() < 0.7 else 0
-        radii = (rand_radius(), rand_radius(), rand_radius(), rand_radius())
-        mask = create_custom_rounded_rect_mask(w_rect, h_rect, radii)
+        num_rounded = random.randint(0,2)
+        indices = [0,1,2,3]
+        rounded_indices = random.sample(indices, num_rounded)
+        radii = []
+        for i in indices:
+            if i in rounded_indices:
+                r_val = random.uniform(10, 0.2 * min_dim)
+                radii.append(r_val)
+            else:
+                radii.append(0)
+        mask = create_custom_rounded_rect_mask(w_rect, h_rect, tuple(radii))
         overlay.paste(cell_gradient, (x0, y0), mask)
     return overlay
 
