@@ -11,41 +11,22 @@ import os
 WIDTH, HEIGHT = 3000, 3000
 
 def generate_palette(n=10):
-    vibe = random.choice(["beige", "mint", "blue", "rainbow"])
-    palette = []
-    if vibe == "beige":
-        base_hue = random.uniform(25/360, 45/360)
-        for _ in range(n):
-            sat = random.uniform(0.2, 0.4)
-            light = random.uniform(0.6, 0.8)
-            r, g, b = colorsys.hls_to_rgb(base_hue + random.uniform(-0.05, 0.05), light, sat)
-            hex_color = f"#{int(r*255):02X}{int(g*255):02X}{int(b*255):02X}"
-            palette.append(hex_color)
-    elif vibe == "mint":
-        base_hue = random.uniform(140/360, 170/360)
-        for _ in range(n):
-            sat = random.uniform(0.4, 0.6)
-            light = random.uniform(0.65, 0.85)
-            r, g, b = colorsys.hls_to_rgb(base_hue + random.uniform(-0.05, 0.05), light, sat)
-            hex_color = f"#{int(r*255):02X}{int(g*255):02X}{int(b*255):02X}"
-            palette.append(hex_color)
-    elif vibe == "blue":
-        base_hue = random.uniform(200/360, 230/360)
-        for _ in range(n):
-            sat = random.uniform(0.4, 0.7)
-            light = random.uniform(0.5, 0.75)
-            r, g, b = colorsys.hls_to_rgb(base_hue + random.uniform(-0.05, 0.05), light, sat)
-            hex_color = f"#{int(r*255):02X}{int(g*255):02X}{int(b*255):02X}"
-            palette.append(hex_color)
-    else:
-        for _ in range(n):
-            h = random.random()
-            s = random.uniform(0.4, 0.8)
-            l = random.uniform(0.4, 0.8)
-            r, g, b = colorsys.hls_to_rgb(h, l, s)
-            hex_color = f"#{int(r*255):02X}{int(g*255):02X}{int(b*255):02X}"
-            palette.append(hex_color)
-    return palette
+    # Candidate colors: beige/light brown, earthy greens, blues, with traces of orange/red.
+    candidates = [
+        "#F5F5DC",  # beige
+        "#D2B48C",  # tan
+        "#F0E68C",  # khaki
+        "#A0522D",  # sienna
+        "#CD853F",  # peru
+        "#556B2F",  # dark olive green
+        "#6B8E23",  # olive drab
+        "#4682B4",  # steel blue
+        "#5F9EA0",  # cadet blue
+        "#FFA500",  # orange
+        "#FF4500"   # orange red
+    ]
+    weights = [15, 15, 10, 10, 10, 15, 15, 15, 15, 5, 5]
+    return random.choices(candidates, weights=weights, k=n)
 
 def hex_to_rgb(hex_color):
     hex_color = hex_color.lstrip("#")
@@ -144,8 +125,8 @@ def add_tessellation_overlay(base_image, palette):
         alpha = cell_gradient.split()[3].point(lambda p: int(p * opacity))
         cell_gradient.putalpha(alpha)
         min_dim = min(w_rect, h_rect)
-        num_rounded = random.randint(0,2)
-        indices = [0,1,2,3]
+        num_rounded = random.randint(0, 2)
+        indices = [0, 1, 2, 3]
         rounded_indices = random.sample(indices, num_rounded)
         radii = []
         for i in indices:
@@ -158,26 +139,31 @@ def add_tessellation_overlay(base_image, palette):
         overlay.paste(cell_gradient, (x0, y0), mask)
     return overlay
 
-def add_extra_collage_elements(overlay, palette):
-    for _ in range(random.randint(2, 5)):
-        w_shape = random.randint(100, 600)
-        h_shape = random.randint(100, 600)
-        x0 = random.randint(0, WIDTH - w_shape)
-        y0 = random.randint(0, HEIGHT - h_shape)
+def add_extra_circles(base_image, palette):
+    overlay = Image.new("RGBA", base_image.size, (0, 0, 0, 0))
+    for _ in range(random.randint(3, 7)):
+        size = random.randint(150, 400)
+        x = random.randint(0, WIDTH - size)
+        y = random.randint(0, HEIGHT - size)
         color1_hex = random.choice(palette)
         color2_hex = random.choice(palette)
         while color2_hex == color1_hex:
             color2_hex = random.choice(palette)
         color1 = hex_to_rgb(color1_hex)
         color2 = hex_to_rgb(color2_hex)
-        gradient_direction = random.choice(['vertical', 'horizontal', 'diagonal'])
-        shape_gradient = create_gradient_image(w_shape, h_shape, color1, color2, gradient_direction)
-        shape_gradient = shape_gradient.convert("RGBA")
-        opacity = random.uniform(0.5, 1.0)
-        alpha = shape_gradient.split()[3].point(lambda p: int(p * opacity))
-        shape_gradient.putalpha(alpha)
-        mask = create_ellipse_mask(w_shape, h_shape)
-        overlay.paste(shape_gradient, (x0, y0), mask)
+        direction = random.choice(['vertical', 'horizontal', 'diagonal'])
+        circle_gradient = create_gradient_image(size, size, color1, color2, direction)
+        circle_gradient = circle_gradient.convert("RGBA")
+        opacity = random.uniform(0.6, 1.0)
+        alpha = circle_gradient.split()[3].point(lambda p: int(p * opacity))
+        circle_gradient.putalpha(alpha)
+        mask = create_ellipse_mask(size, size)
+        if random.random() < 0.5:
+            shadow_offset = (random.randint(2, 4), random.randint(2, 4))
+            shadow = Image.new("RGBA", (size, size), (0, 0, 0, 80))
+            shadow = shadow.filter(ImageFilter.GaussianBlur(radius=3))
+            overlay.paste(shadow, (x+shadow_offset[0], y+shadow_offset[1]), mask)
+        overlay.paste(circle_gradient, (x, y), mask)
     return overlay
 
 def apply_global_effects(image):
@@ -190,8 +176,9 @@ def generate_artwork_to_stream():
     palette = generate_palette(10)
     background = create_random_gradient_background(palette)
     tess_overlay = add_tessellation_overlay(background, palette)
-    tess_overlay = add_extra_collage_elements(tess_overlay, palette)
+    circles_overlay = add_extra_circles(background, palette)
     final = Image.alpha_composite(background.convert("RGBA"), tess_overlay)
+    final = Image.alpha_composite(final, circles_overlay)
     final = apply_global_effects(final)
     output = io.BytesIO()
     final.convert("RGB").save(output, "PNG")
